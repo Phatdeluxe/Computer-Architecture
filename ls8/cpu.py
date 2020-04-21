@@ -2,13 +2,14 @@
 
 import sys
 
+read_file = sys.argv[1]
 
 # List of instructions
 
 HLT = 0b00000001
 LDI = 0b10000010
 PRN = 0b01000111
-
+MUL = 0b10100010
 
 
 class CPU:
@@ -19,16 +20,33 @@ class CPU:
         self.ram = [0] * 255
         self.reg = [0] * 8
         self.pc = 0
-        self.reg_a = 0
-        self.reg_b = 0
+        self.ir = 0
 
     def load(self):
         """Load a program into memory."""
 
         address = 0
 
-        # For now, we've just hardcoded a program:
+        with open(read_file) as f:
+            for line in f:
+                line = line.split('#')
+                line = line[0].strip()
+                
+                if line == '':
+                    continue
+                
+                line = int(line,2)
+                # line = bin(line)
 
+                self.ram[address] = line
+                # print(self.ram[address])
+                address += 1
+
+        # sys.exit()
+
+
+        # For now, we've just hardcoded a program:
+        '''
         program = [
             # From print8.ls8
             0b10000010, # LDI R0,8
@@ -42,6 +60,7 @@ class CPU:
         for instruction in program:
             self.ram[address] = instruction
             address += 1
+        '''
 
     def ram_read(self, MAR):
         MDR = self.ram[MAR]
@@ -55,7 +74,10 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            self.reg[reg_a] -= self.reg[reg_b]
+        elif op == 'MUL':
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -81,30 +103,40 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        # set and get IR from ram.
-        IR = 0
+
         running = True
         
         # continue to run until a HLT instruction is accessed
         while running:
-            IR = self.ram_read(self.pc)
+            # print('Next command')
+            self.ir = self.ram_read(self.pc)
             
-
+            inst_len = ((self.ir & 0b11000000) >> 6) + 1
             ## Space for my beautiful elif cascade
             # Using the IR code we can determine how many variable we need to take from memory
 
-            if IR == HLT:
+            if self.ir == HLT:
+                # print('HLT')
                 running = False
 
-            elif IR == LDI:
-                self.reg_a = self.ram_read(self.pc + 1)
-                self.reg_b = self.ram_read(self.pc + 2)
-                self.reg[self.reg_a] = self.reg_b
-                self.pc += 3
+            elif self.ir == LDI:
+                # print('LDI')
+                reg_a = self.ram_read(self.pc + 1)
+                reg_b = self.ram_read(self.pc + 2)
+                self.reg[reg_a] = reg_b
+                # self.pc += 3
 
-            elif IR == PRN:
-                self.reg_a = self.ram_read(self.pc + 1)
-                self.reg_b = self.reg[self.reg_a]
-                print(int(self.reg_b))
-                self.pc += 2
+            elif self.ir == PRN:
+                # print('PRN')
+                reg_a = self.ram_read(self.pc + 1)
+                reg_b = self.reg[reg_a]
+                print(int(reg_b))
+                # self.pc += 2
 
+            elif self.ir == MUL:
+                reg_a = self.ram_read(self.pc + 1)
+                reg_b = self.ram_read(self.pc + 2)
+                self.alu('MUL', reg_a, reg_b)
+                # self.pc += 3
+
+            self.pc += inst_len
