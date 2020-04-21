@@ -2,14 +2,25 @@
 
 import sys
 
+
+# List of instructions
+
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+
+
+
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = []
+        self.ram = [0] * 255
         self.reg = [0] * 8
         self.pc = 0
+        self.reg_a = 0
+        self.reg_b = 0
 
     def load(self):
         """Load a program into memory."""
@@ -70,4 +81,30 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        IR = [0] * 8
+        # set and get IR from ram.
+        IR = 0
+        running = True
+        
+        # continue to run until a HLT instruction is accessed
+        while running:
+            IR = self.ram_read(self.pc)
+            
+
+            ## Space for my beautiful elif cascade
+            # Using the IR code we can determine how many variable we need to take from memory
+
+            if IR == HLT:
+                running = False
+
+            elif IR == LDI:
+                self.reg_a = self.ram_read(self.pc + 1)
+                self.reg_b = self.ram_read(self.pc + 2)
+                self.reg[self.reg_a] = self.reg_b
+                self.pc += 3
+
+            elif IR == PRN:
+                self.reg_a = self.ram_read(self.pc + 1)
+                self.reg_b = self.reg[self.reg_a]
+                print(int(self.reg_b))
+                self.pc += 2
+
