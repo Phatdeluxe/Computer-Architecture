@@ -30,6 +30,10 @@ memory = [0] * 256
 
 register = [0] * 8    # like variables R0-R7
 
+# R7 is the SP
+SP = 7
+register[SP] = 0xF4
+
 # load program into memory
 address = 0
 with open(program_filename) as f:
@@ -66,6 +70,17 @@ while running:
         reg_num = memory[pc + 1]
         value = register[reg_num]
         print(value)
+
+    elif inst == PUSH:
+        register[SP] -= 1
+        
+        reg_num = memory[pc + 1]
+        value = register[reg_num]
+
+        address = register[SP]
+        memory[address] = value
+
+
 
     elif inst == HALT:
         running = False
@@ -171,4 +186,15 @@ ir = 0b10000010
   | 00000111
   ----------
     00010111
+'''
+
+
+# Wednesday
+
+'''
+
+
+
+
+
 '''
