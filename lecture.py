@@ -9,6 +9,7 @@ PRINT_BEEJ = 1
 HALT = 2
 SAVE_REG = 3  # store a value in a register (in the LS8 called LDI)
 PRINT_REG = 4    # corresponds to PRN in the LS8
+PUSH = 5
 
 '''
 memory = [
@@ -189,12 +190,48 @@ ir = 0b10000010
 '''
 
 
-# Wednesday
+# Thursday
 
 '''
+Stack Frames
+
+# Stack grows downward
+#
+# 701: 
+# 
+# 700: # return point 1   |
+# 699: a = 2              |  main()'s stack frame
+# 698: b = ??             |
+#
+# 697: # return point 2   |
+# 696: x = 2              |  mult2()'s stack frame
+# 695: y = 7              |
+# 694: z = ??             |
 
 
+When you call, return addr gets pushed on the stack
+When you return, return addr gets popped off the stack and stored in PC
 
 
+def mult2(x, y):
+    z = x * y
+    return z
+
+def main():
+    a = 2
+
+    b = mult2(a, 7)
+
+    # return point 2
+
+    print(b)
+
+    return
+
+main()
+
+# Return point 1
+
+print('All done!')
 
 '''
