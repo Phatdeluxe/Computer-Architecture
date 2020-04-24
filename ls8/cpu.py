@@ -1,5 +1,6 @@
 """CPU functionality."""
 
+import keyboard
 import sys
 from datetime import datetime 
 
@@ -8,6 +9,7 @@ read_file = sys.argv[1]
 # List of instructions
 
 ADD = 0b10100000
+ADDI = 0b10100101
 AND = 0b10101000
 CALL = 0b01010000
 CMP = 0b10100111
@@ -62,6 +64,7 @@ class CPU:
         # initalizing the branch table to allow O(1) runtime
         self.branchtable = {}
         self.branchtable[ADD] = self.ADD
+        self.branchtable[ADDI] = self.ADDI
         self.branchtable[AND] = self.AND
         self.branchtable[CALL] = self.CALL
         self.branchtable[CMP] = self.CMP
@@ -77,7 +80,7 @@ class CPU:
         self.branchtable[JLE] = self.JLE
         self.branchtable[JLT] = self.JLT
         self.branchtable[JMP] = self.JMP
-        self.branchtable[JMP] = self.JMP
+        self.branchtable[JNE] = self.JNE
         self.branchtable[LD] = self.LD
         self.branchtable[LDI] = self.LDI
         self.branchtable[MOD] = self.MOD
@@ -148,6 +151,9 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+            self.reg[reg_a] &= 0xFF
+        elif op == 'ADDI':
+            self.reg[reg_a] += reg_b
             self.reg[reg_a] &= 0xFF
         elif op == 'MUL':
             self.reg[reg_a] *= self.reg[reg_b]
@@ -227,6 +233,14 @@ class CPU:
         reg_b = self.ram_read(self.pc + 2)
         # use the ALU to preform the addition
         self.alu('ADD', reg_a, reg_b)
+
+    def ADDI(self):
+        # get the register holding first value to be added
+        reg_a = self.ram_read(self.pc + 1)
+        # get the value to be added to reg_a (this is a value, not a register)
+        val_b = self.ram_read(self.pc + 2)
+        # call the ALU to preform the calculation
+        self.alu('ADDI', reg_a, val_b)
 
     def AND(self):
         # get the register holding first value to be bitwise-AND
@@ -536,6 +550,13 @@ class CPU:
         # use the ALU to preform bitwise-XOR
         self.alu('XOR', reg_a, reg_b)
 
+    def key_press(self, key_obj):
+        # store the key pressed into 0xF4
+        self.ram_write(0xF4, ord(key_obj.name))
+        # switch bit 1 on R6 (IS)
+        self.reg[self.IS] |= 0b00000010
+
+
     def run(self):
         """Run the CPU."""
 
@@ -545,6 +566,9 @@ class CPU:
         while self.running:
 
             # self.trace() # <--- Use for debugging
+
+            # check for key press
+            keyboard.on_release(self.key_press)
 
             # check time
             cur_time = datetime.now()
